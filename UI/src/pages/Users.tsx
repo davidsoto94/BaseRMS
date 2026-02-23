@@ -4,6 +4,7 @@ import NavigationBar from '../components/NavigationBar'
 import { useI18n } from '../i18n/I18nProvider'
 import { Permissions } from '../Enums/PermitionEnum'
 import auth, { fetchWithAuth, apiBase, decodeJwt } from '../services/auth'
+import type { ErrorResponse } from '../Types/ErrorType'
 
 type User = {
   id: string
@@ -22,7 +23,7 @@ export default function Users() {
 	const { t } = useI18n()
 	const [users, setUsers] = useState<User[]>([])
 	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState<string | null>(null)
+	  const [error, setError] = useState<string[] | null>(null)
 	const [resendingId, setResendingId] = useState<string | null>(null)
 	const [resendStatus, setResendStatus] = useState<{ [key: string]: string }>({})
 	const hasFetched = useRef(false)
@@ -39,13 +40,31 @@ export default function Users() {
       const response = await fetchWithAuth(`${apiBase}/api/v1/users`)
 
       if (!response.ok) {
-        throw new Error(t('users.error'))
+        let errorData: ErrorResponse | null = null
+        try {
+          errorData = await response.json()
+        } catch {
+          errorData = null
+        }
+        const errorList: string[] = []
+        if (errorData?.detail) {
+          errorList.push(errorData.detail)
+        }
+        if (errorData?.errors) {
+          Object.values(errorData.errors).forEach((messages) => {
+            if (Array.isArray(messages)) {
+              errorList.push(...messages)
+            }
+          })
+        }
+        throw new Error(errorList.length ? errorList.join('; ') : t('users.error'))
       }
 
       const data = await response.json()
       setUsers(Array.isArray(data) ? data : data.data || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('users.error'))
+      const msg = err instanceof Error ? err.message : t('users.error')
+      setError([msg])
     } finally {
       setLoading(false)
     }

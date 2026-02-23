@@ -192,4 +192,7 @@
   <data name="SuccessfulForgotPassword" xml:space="preserve">
     <value>Si un compte existe avec cette adresse e-mail, un lien de réinitialisation du mot de passe a été envoyé.</value>
   </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Jeton invalide</value>
+  </data>
 </root>

@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import NavigationBar from "../components/NavigationBar";
 import { fetchWithAuth, apiBase } from "../services/auth";
 import { useI18n } from "../i18n/I18nProvider";
+import type { ErrorResponse } from "../Types/ErrorType";
 
 
 export default function Register() {
@@ -31,7 +32,7 @@ export default function Register() {
       setLoadingRoles(true);
       setRolesError(false);
       try {
-        const response = await fetchWithAuth(`${apiBase}/api/v1/register`, {
+        const response = await fetchWithAuth(`${apiBase}/api/v1/roles`, {
           method: "GET",
           signal: controller.signal,
         });
@@ -85,8 +86,22 @@ export default function Register() {
         data = null;
       }
       if (!response.ok) {
-        const parsed = Array.isArray(data) ? data : [];
-        setSubmitErrors(parsed.length ? parsed : [t("register.error_generic")]);
+        const errorData = data as ErrorResponse | null;
+        const errorList: string[] = [];
+        
+        if (errorData?.detail) {
+          errorList.push(errorData.detail);
+        }
+        
+        if (errorData?.errors) {
+          Object.values(errorData.errors).forEach((messages) => {
+            if (Array.isArray(messages)) {
+              errorList.push(...messages);
+            }
+          });
+        }
+        
+        setSubmitErrors(errorList.length ? errorList : [t("register.error_generic")]);
         return;
       }
       setSubmitSuccess(true);

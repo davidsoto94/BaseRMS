@@ -52,6 +52,20 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = ctx =>
+    {
+        // Always include useful metadata
+        ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
+        ctx.ProblemDetails.Extensions["timestamp"] = DateTime.UtcNow;
+        ctx.ProblemDetails.Instance = $"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Path}";
+    };
+});
+
+
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSingleton<IEmailSender, EmailService>();
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<AuthRepository>();
@@ -115,6 +129,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseExceptionHandler();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseRequestLocalization();
@@ -123,7 +138,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<BaseCRM.Middleware.EnforceMfaMiddleware>();
-
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 

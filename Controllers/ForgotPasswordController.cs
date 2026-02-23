@@ -23,13 +23,8 @@ public class ForgotPasswordController (
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ForgotPasswordRequest model)
     {
-        var result = await accountService.ForgotPassword(model.Email);
-        if (result.Success)
-        {
-            return Ok(_localizer["SuccessfulForgotPassword"].Value);
-        }
-        return BadRequest(result.Errors);
-
+        await accountService.ForgotPassword(model.Email);
+        return Ok(_localizer["SuccessfulForgotPassword"].Value);
     }
 
 }

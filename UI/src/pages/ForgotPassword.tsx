@@ -5,6 +5,7 @@ import LangSelector from "../components/LangSelector";
 import { useI18n } from "../i18n/I18nProvider";
 import { apiBase } from "../services/auth";
 import { fetchWithLanguage } from "../Utilities/fetchWithLanguage";
+import type { ErrorResponse } from "../Types/ErrorType";
 
 export default function ForgotPassword() {
   const { t } = useI18n();
@@ -12,7 +13,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string[] | null>(null);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -25,10 +26,29 @@ export default function ForgotPassword() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const errorList: string[] = [];
+        try {
+          const errorData = await response.json() as ErrorResponse;
+          if (errorData?.detail) {
+            errorList.push(errorData.detail);
+          }
+          if (errorData?.errors) {
+            Object.values(errorData.errors).forEach((messages) => {
+              if (Array.isArray(messages)) {
+                errorList.push(...messages);
+              }
+            });
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(errorList.length ? errorList.join("; ") : t("forgot.error_generic"));
+      }
       setSuccess(true);
-    } catch {
-      setError(t("forgot.error_generic"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t("forgot.error_generic");
+      setError([msg]);
     } finally {
       setLoading(false);
     }
@@ -66,7 +86,11 @@ export default function ForgotPassword() {
 
           {error && (
             <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md px-3 py-2">
-              {error}
+              <ul className="list-disc list-inside space-y-1">
+                {error.map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+              </ul>
             </div>
           )}
           {success && (

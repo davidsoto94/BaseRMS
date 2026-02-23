@@ -192,4 +192,7 @@
   <data name="SuccessfulForgotPassword" xml:space="preserve">
     <value>If an account with that email exists, a password reset link has been sent.</value>
   </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Invalid token</value>
+  </data>
 </root>

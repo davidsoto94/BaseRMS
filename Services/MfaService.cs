@@ -1,143 +1,130 @@
-using BaseCRM.Entities;
 using BaseCRM.DTOs;
+using BaseCRM.Entities;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BaseCRM.Services;
 
-public class MfaService (UserManager<ApplicationUser> userManager)
+public class MfaService(UserManager<ApplicationUser> userManager,
+    IdentityErrorLocalizerService identityErrorLocalizer)
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IdentityErrorLocalizerService _identityErrorLocalizer = identityErrorLocalizer;
 
-    public async Task<(bool Success, MfaSetupDto? Setup, IEnumerable<string>? Errors)> GenerateMfaSetupAsync(ApplicationUser user)
+    public async Task<bool> IsMfaEnable(ApplicationUser user)
     {
-        try
-        {
-            // Reset authenticator key if needed
-            await _userManager.ResetAuthenticatorKeyAsync(user);
-            var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
-
-            if (string.IsNullOrEmpty(unformattedKey))
-            {
-                return (false, null, new[] { "Failed to generate authenticator key" });
-            }
-
-            var formattedKey = FormatKey(unformattedKey);
-            var qrCode = GenerateQrCode(user.Email!, unformattedKey);
-
-            return (true, new MfaSetupDto 
-            { 
-                QrCode = qrCode,
-                ManualKey = formattedKey
-            }, null);
-        }
-        catch (Exception ex)
-        {
-            return (false, null, new[] { ex.Message });
-        }
+        var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+        return isTwoFactorEnabled;
     }
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> VerifyAndEnableMfaAsync(ApplicationUser user, string code)
+    public async Task<MfaSetupDto> GenerateMfaSetupAsync(ApplicationUser user)
     {
-        try
+        // Reset authenticator key if needed
+        await _userManager.ResetAuthenticatorKeyAsync(user);
+        var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
+
+        if (string.IsNullOrEmpty(unformattedKey))
         {
-            var authenticatorCode = code.Replace(" ", "").Replace("-", "");
-
-            if (authenticatorCode.Length != 6 || !authenticatorCode.All(char.IsDigit))
-            {
-                return (false, new[] { "Invalid authenticator code format" });
-            }
-
-            var isValid = await _userManager.VerifyTwoFactorTokenAsync(
-                user, _userManager.Options.Tokens.AuthenticatorTokenProvider, authenticatorCode);
-
-            if (!isValid)
-            {
-                return (false, new[] { "Invalid authenticator code" });
-            }
-
-            if (!user.TwoFactorEnabled)
-            {
-                var result = await _userManager.SetTwoFactorEnabledAsync(user, true);
-                if (result.Succeeded)
-                {
-                    return (true, null);
-                }
-                var errors = result.Errors.Select(e => e.Description);
-                return (false, errors);
-            }
-            return (true, null);
+            throw new ArgumentException("Failed to generate authenticator key");
         }
-        catch (Exception ex)
+
+        var formattedKey = FormatKey(unformattedKey);
+        var qrCode = GenerateQrCode(user.Email!, unformattedKey);
+
+        return new MfaSetupDto
         {
-            return (false, new[] { ex.Message });
-        }
+            QrCode = qrCode,
+            ManualKey = formattedKey
+        };
+
     }
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> DisableMfaAsync(ApplicationUser user)
+    public async Task<(bool enabled, List<string>? recoveryCodes)> VerifyAndEnableMfaAsync(ApplicationUser user, MfaVerifyRequest request)
     {
-        try
+        if (string.IsNullOrWhiteSpace(request.Code))
         {
-            var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
+            throw new ArgumentException("Code is required");
+        }
+
+        var authenticatorCode = request.Code.Replace(" ", "").Replace("-", "");
+
+        if (authenticatorCode.Length != 6 || !authenticatorCode.All(char.IsDigit))
+        {
+            throw new ArgumentException("Invalid authenticator code format");
+        }
+
+        var isValid = await _userManager.VerifyTwoFactorTokenAsync(
+            user, _userManager.Options.Tokens.AuthenticatorTokenProvider, authenticatorCode);
+
+        if (!isValid)
+        {
+            throw new ArgumentException("Invalid authenticator code");
+        }
+
+        if (!user.TwoFactorEnabled)
+        {
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, true);
             if (result.Succeeded)
             {
                 return (true, null);
             }
-
             var errors = result.Errors.Select(e => e.Description);
-            return (false, errors);
+            throw new ArgumentException(string.Join(", ", errors ?? []));
         }
-        catch (Exception ex)
+
+        var recoveryCodes = await GenerateRecoveryCodesAsync(user);
+        return (true, recoveryCodes.ToList());
+    }
+
+    public async Task DisableMfaAsync(ApplicationUser user)
+    {
+        var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
+        if (!result.Succeeded)
         {
-            return (false, new[] { ex.Message });
+            var localizedErrors = _identityErrorLocalizer.LocalizeErrors(result.Errors ?? []);
+            throw new ArgumentException(string.Join(", ", localizedErrors ?? []));
         }
     }
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> VerifyMfaCodeAsync(ApplicationUser user, string code)
+    public async Task VerifyMfaCodeAsync(ApplicationUser user, MfaVerifyRequest request)
     {
-        try
+
+        if (string.IsNullOrWhiteSpace(request.Code))
         {
-            var authenticatorCode = code.Replace(" ", "").Replace("-", "");
-
-            if (authenticatorCode.Length != 6 || !authenticatorCode.All(char.IsDigit))
-            {
-                return (false, new[] { "Invalid authenticator code format" });
-            }
-
-            var isValid = await _userManager.VerifyTwoFactorTokenAsync(
-                user, _userManager.Options.Tokens.AuthenticatorTokenProvider, authenticatorCode);
-
-            return isValid ? (true, null) : (false, new[] { "Invalid authenticator code" });
+            throw new ArgumentException("Code is required");
         }
-        catch (Exception ex)
+
+        if (!await _userManager.GetTwoFactorEnabledAsync(user))
         {
-            return (false, new[] { ex.Message });
+            throw new ArgumentException("MFA is not enabled");
+        }
+
+        var authenticatorCode = request.Code.Replace(" ", "").Replace("-", "");
+
+        if (authenticatorCode.Length != 6 || !authenticatorCode.All(char.IsDigit))
+        {
+            throw new ArgumentException("Invalid authenticator code format");
+        }
+
+        var isValid = await _userManager.VerifyTwoFactorTokenAsync(
+            user, _userManager.Options.Tokens.AuthenticatorTokenProvider, authenticatorCode);
+        if (!isValid)
+        {
+            throw new ArgumentException("Invalid authenticator code");
         }
     }
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> GenerateRecoveryCodesAsync(ApplicationUser user)
-    {
-        try
-        {
-            var result = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-            if (result != null && result.Any())
-            {
-                return (true, null);
-            }
 
-            return (false, new[] { "Failed to generate recovery codes" });
-        }
-        catch (Exception ex)
-        {
-            return (false, new[] { ex.Message });
-        }
-    }
-
-    public async Task<IEnumerable<string>> GetRecoveryCodesAsync(ApplicationUser user)
+    public async Task<List<string>> GenerateRecoveryCodesAsync(ApplicationUser user)
     {
-        // Since we don't have a direct method to retrieve recovery codes,
-        // return empty list - recovery codes are returned after generation
-        return new List<string>();
+        var result = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        if (result is null)
+        {
+            throw new Exception("Failed to generate recovery codes");
+        }
+        return [.. result];
     }
 
     private string FormatKey(string unformattedKey)

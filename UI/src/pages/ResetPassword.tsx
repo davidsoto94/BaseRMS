@@ -5,6 +5,7 @@ import LangSelector from "../components/LangSelector";
 import { useI18n } from "../i18n/I18nProvider";
 import { apiBase } from "../services/auth";
 import { fetchWithLanguage } from "../Utilities/fetchWithLanguage";
+import type { ErrorResponse } from "../Types/ErrorType";
 
 export default function ResetPassword() {
   const { t } = useI18n();
@@ -74,22 +75,23 @@ export default function ResetPassword() {
       });
 
       if (!response.ok) {
-        let errorMessage = t("reset.error_generic");
+        const errorList: string[] = [];
         try {
-          const data = await response.json();
-          const messages: string[] = [];
-          if (typeof data?.message === "string") messages.push(data.message);
-          if (Array.isArray(data?.errors)) {
-            console.log(data.errors);
-            messages.push(
-              ...data.errors.filter((item: unknown): item is string => typeof item === "string")
-            );
+          const errorData = await response.json() as ErrorResponse;
+          if (errorData?.detail) {
+            errorList.push(errorData.detail);
           }
-          if (messages.length) errorMessage = messages.join("\n");
+          if (errorData?.errors) {
+            Object.values(errorData.errors).forEach((messages) => {
+              if (Array.isArray(messages)) {
+                errorList.push(...messages);
+              }
+            });
+          }
         } catch {
-          // ignore JSON parse errors, fall back to generic message
+          // ignore JSON parse errors
         }
-        throw new Error(errorMessage);
+        throw new Error(errorList.length ? errorList.join("\n") : t("reset.error_generic"));
       }
 
       setSuccess(true);

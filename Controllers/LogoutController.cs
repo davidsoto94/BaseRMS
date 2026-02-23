@@ -20,15 +20,11 @@ public class LogoutController (AccountService accountService
         // Get refresh token from httpOnly cookie
         if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken) || string.IsNullOrEmpty(refreshToken))
         {
-            return Unauthorized(new[] { _localizer["InvalidCredentials"].Value });
+            return Ok(new { message = "Logout successful" });
         }
         Response.Cookies.Delete("refreshToken");
         var ipAddress = Request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-        var result = await accountService.RevokeRefreshToken(refreshToken, ipAddress);
-
-        if (!result.Success)
-            return BadRequest(new[] { _localizer[result.Error ?? "InvalidCredentials"].Value });
-
+        await accountService.RevokeRefreshToken(refreshToken, ipAddress);
         return Ok(new { message = "Logout successful" });
     }
 }

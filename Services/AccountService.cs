@@ -2,8 +2,10 @@
 using BaseCRM.DTOs;
 using BaseCRM.Entities;
 using BaseCRM.Enums;
+using BaseCRM.Extensions;
 using BaseCRM.Localization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -15,50 +17,132 @@ namespace BaseCRM.Services;
 public class AccountService (
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
+    SignInManager<ApplicationUser> signInManager,
     IEmailSender emailSender,
     EmailTemplateService emailTemplateService,
+    DeviceTrustService deviceTrustService,
     IdentityErrorLocalizerService identityErrorLocalizer,
     JWTTokenService jwtTokenService,
     IHttpContextAccessor httpContextAccessor,
-    IStringLocalizer<EmailTemplates> emailLocalizer)
+    IStringLocalizer<EmailTemplates> emailLocalizer,
+    IStringLocalizer<IdentityErrorMessages> identityLocalizer)
 {
 
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
+    private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly EmailTemplateService _emailTemplateService = emailTemplateService;
+    private readonly DeviceTrustService _deviceTrustService = deviceTrustService;
     private readonly IdentityErrorLocalizerService _identityErrorLocalizer = identityErrorLocalizer;
     private readonly IStringLocalizer<EmailTemplates> _emailLocalizer = emailLocalizer;
+    private readonly IStringLocalizer<IdentityErrorMessages> _identityLocalizer = identityLocalizer;
     private readonly HttpContext _httpContext = httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext is required");
 
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> ResetPasswordAsync(string email, string resetCode, string newPassword)
+    public async Task<ApplicationUser> GetApplicationUser(ClaimsPrincipal claims)
     {
-        var user = await _userManager.FindByEmailAsync(email);
+
+        var userId = claims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException();
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            // Don't reveal that the user does not exist
-            return (true, null);
+            throw new KeyNotFoundException();
         }
-
-        // Use the UserManager.ResetPasswordAsync method to validate the token and update the password
-        var result = await _userManager.ResetPasswordAsync(user, resetCode, newPassword);
-        if (result.Succeeded)
-        {
-            // Optional: Invalidate any other existing tokens for enhanced security.
-            await _userManager.UpdateSecurityStampAsync(user);
-
-            return (true, null);
-        }
-        var localizedErrors = _identityErrorLocalizer.LocalizeErrors(result.Errors ?? []);
-        return (false, localizedErrors);
+        return user;
     }
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> ForgotPassword(string email)
+    public async Task<LoginResponse> LoginUser(LoginDTO loginDTO)
+    {
+        var user = await _userManager.FindByEmailAsync(loginDTO.Email);
+        if (user == null)
+        {
+            throw new ArgumentException(_identityLocalizer["InvalidCredentials"].Value );
+        }
+        var result = await _signInManager.CheckPasswordSignInAsync(
+            user, loginDTO.Password, lockoutOnFailure: true);
+        if (!result.Succeeded)
+        {
+            throw new ArgumentException(_identityLocalizer["InvalidCredentials"].Value);
+        }
+        var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+        var deviceFingerprint = _deviceTrustService.GenerateDeviceFingerprint();
+        var isDeviceTrusted = await _deviceTrustService.IsDeviceTrusted(user, deviceFingerprint);
+
+        // RequireSetupMfa: true = user must SET UP MFA (doesn't have it yet)
+        // MfaRequired: true = user has MFA enabled AND device is not trusted
+        var mfaRequired = isTwoFactorEnabled && !isDeviceTrusted;
+
+        string? accessToken = null;
+        string? tempToken = null;
+
+        if (mfaRequired || !isTwoFactorEnabled)
+        {
+            // Generate scoped token for MFA verification only
+            tempToken = await jwtTokenService.GenerateJwtToken(user, scope: "mfa_verification");
+        }
+        else
+        {
+            // Generate full access token
+            accessToken = await GetAccessTokenWithRefreshToken(user);
+        }
+
+        var response = new LoginResponse
+        {
+            AccessToken = accessToken,
+            TempToken = tempToken,
+            RequireSetupMfa = !isTwoFactorEnabled,
+            MfaRequired = mfaRequired
+        };
+        return response;
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var errors = new List<ValidationError>();
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+            errors.Add(new ValidationError { Field = "email", Message = _identityLocalizer["EmailRequired"].Value });
+
+        if (string.IsNullOrWhiteSpace(request.ResetCode))
+            errors.Add(new ValidationError { Field = "token", Message = _identityLocalizer["TokenRequired"].Value });
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword))
+            errors.Add(new ValidationError { Field = "newPassword", Message = _identityLocalizer["PasswordRequired"].Value });
+
+        if (errors.Any())
+            throw new ValidationException(errors);
+
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return;
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, request.ResetCode, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            var localizedErrors = result.Errors.Select(s => new ValidationError
+            {
+                Field = s.Code,
+                Message = _identityErrorLocalizer.LocalizeError(s)
+            });
+            throw new ValidationException(localizedErrors);
+        }
+        await _userManager.UpdateSecurityStampAsync(user);
+        
+    }
+
+    public async Task ForgotPassword(string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
         if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
         {
-            return (true, null);
+            return;
         }
 
         // Generate a password reset token
@@ -72,36 +156,58 @@ public class AccountService (
 
         // Send the email with localized content
         await emailSender.SendEmailAsync(email, emailSubject, emailBody);
-        return (true, null);
     }
 
-    public async Task<(bool Success, IEnumerable<string>? Errors)> RegisterNewUser(RegisterDTO newUser, ApplicationUser requestUser)
+    public async Task RegisterNewUser(RegisterDTO newUserData, ClaimsPrincipal claims)
     {
-        var user = await _userManager.FindByEmailAsync(newUser.Email);
-        user = new ApplicationUser
+        var user = await  GetApplicationUser(claims);
+        var isAuthorizedToAdd = await IsAuthorizedToAddNewUser(user);
+        if (!isAuthorizedToAdd)
         {
-            UserName = newUser.Email,
-            Name = newUser.Name,
-            LastName = newUser.LastName,
-            Email = newUser.Email,
+            throw new UnauthorizedAccessException(_identityLocalizer["UnauthorizedAccess"].Value);
+        }
+        var newUser = await _userManager.FindByEmailAsync(newUserData.Email);
+
+        if(newUser != null)
+        {
+            throw new ValidationException(new List<ValidationError>
+            {
+                new ValidationError
+                {
+                    Field = "email",
+                    Message = string.Format(
+                        _identityLocalizer["DuplicateEmail"].Value,
+                        newUserData.Email)
+                }
+            });
+        }
+
+        newUser = new ApplicationUser
+        {
+            UserName = newUserData.Email,
+            Name = newUserData.Name,
+            LastName = newUserData.LastName,
+            Email = newUserData.Email,
         };        
 
         var result = await _userManager.CreateAsync(user);
         if (!result.Succeeded)
         {
-            var localizedErrors = _identityErrorLocalizer.LocalizeErrors(result.Errors ?? []);
-            return (false, localizedErrors);
+            throw new ValidationException(result.Errors.Select(s => new ValidationError
+            {
+                Field = s.Code,
+                Message = _identityErrorLocalizer.LocalizeError(s)
+            }));
         }
 
-        newUser.roles = await RolesToBeAdded(newUser.roles, requestUser);
-        var currentRoles = _roleManager.Roles.Where(w => newUser.roles.Contains(w.Name!)).Select(s => s.Name!).ToList();
+        newUserData.roles = await RolesToBeAdded(newUserData.roles, user);
+        var currentRoles = _roleManager.Roles.Where(w => newUserData.roles.Contains(w.Name!)).Select(s => s.Name!).ToList();
         foreach (var role in currentRoles)
         {
             await _userManager.AddToRoleAsync(user, role);
         }
 
         await SendConfirmationEmail(user);
-        return (true, null);
     }
 
     public async Task<(bool Success, string? AccessToken, string? RefreshToken, string? Error)> RefreshToken(string refreshToken, string ipAddress)
@@ -147,20 +253,18 @@ public class AccountService (
         return rolesAttempted.Where(w => userRoles.Contains(w)).ToList();
     }
 
-    public async Task<bool> ConfirmEmail(string userId, string token)
+    public async Task ConfirmEmail(string userId, string token)
     {
-        if (userId == null || token == null) return false;
+        if (userId == null || token == null) throw new ArgumentException(_identityLocalizer["DefaultError"].Value);
 
         var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return false;
+        if (user == null) throw new ArgumentException(_identityLocalizer["DefaultError"].Value);
 
         var result = await _userManager.ConfirmEmailAsync(user, token);
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            return true;
+            throw new ArgumentException(_identityLocalizer["DefaultError"].Value);
         }
-
-        return false;
     }
 
     public async Task<bool> IsAuthorizedToAddNewUser(ApplicationUser? requestUser)
@@ -238,7 +342,7 @@ public class AccountService (
 
     }
 
-    public async Task<(bool Success, string? Error)> RevokeRefreshToken(string refreshToken, string ipAddress)
+    public async Task RevokeRefreshToken(string refreshToken, string ipAddress)
     {
         var user = await _userManager.Users
             .Include(u => u.RefreshTokens)
@@ -246,16 +350,16 @@ public class AccountService (
                 .Any(t => t.Token == refreshToken));
 
         if (user == null)
-            return (false, "Invalid token");
+            throw new ArgumentException(_identityLocalizer["InvalidToken"].Value);
 
         var token = user.RefreshTokens.SingleOrDefault(t => t.Token == refreshToken);
 
         if (token == null)
-            return (false, "Invalid token");
+            throw new ArgumentException(_identityLocalizer["InvalidToken"].Value);
 
         // If token is already revoked, return success
         if (token.Revoked != null)
-            return (true, null);
+            return;
 
         // Revoke the token
         token.Revoked = DateTime.UtcNow;
@@ -265,9 +369,7 @@ public class AccountService (
         if (!result.Succeeded)
         {
             var localizedErrors = _identityErrorLocalizer.LocalizeErrors(result.Errors ?? []);
-            return (false, string.Join(", ", localizedErrors ?? []));
+            throw new ArgumentException(string.Join(", ", localizedErrors ?? []));
         }
-
-        return (true, null);
     }
 }

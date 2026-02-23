@@ -18,18 +18,8 @@ public class ResetPasswordController (AccountService accountService
     [HttpPost]
     public async Task<IActionResult> PostAsync([FromBody] ResetPasswordRequest model)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        var (success, errors) = await accountService.ResetPasswordAsync(model.Email, model.ResetCode, model.NewPassword);
-
-        if (success) {
-            return Ok(_localizer["SuccessfullPasswordReset"]);
-        }
-
-        return BadRequest(errors);
+        await accountService.ResetPasswordAsync(model);
+        return Ok(_localizer["SuccessfullPasswordReset"]);
 
     }
 }

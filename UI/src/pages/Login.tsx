@@ -4,6 +4,7 @@ import auth from '../services/auth'
 import { ThemeToggle } from '../components/ToggleComponent'
 import { useI18n } from '../i18n/I18nProvider'
 import LangSelector from '../components/LangSelector'
+import type { ErrorResponse } from '../Types/ErrorType'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -38,13 +39,24 @@ export default function Login() {
       // Normal login flow
       navigate('/', { replace: true })
     } catch (err: unknown) {
+      console.log('Login error:', err)
       if (err instanceof Error) {
         try {
-          const errors = JSON.parse(err.message)
-          if (Array.isArray(errors)) {
-            setErrors(errors.map(String))
-          } else {
-            setErrors([err.message])
+          const errorData: ErrorResponse = JSON.parse(err.message)          
+          const errorList: string[] = []
+          if (errorData && errorData.detail) {
+            errorList.push(errorData.detail)
+          }
+          if (errorData?.errors) {
+            Object.values(errorData.errors).forEach((messages) => {
+              if (Array.isArray(messages)) {
+                errorList.push(...messages)
+              }
+            })
+          }
+          if (errorList.length) {
+            setErrors(errorList)
+            return
           }
         } catch {
           setErrors([err.message || t('login.error_generic')])

@@ -5,26 +5,26 @@ import { ThemeToggle } from "../components/ToggleComponent";
 import { useI18n } from "../i18n/I18nProvider";
 import { apiBase } from "../services/auth";
 import { fetchWithLanguage } from "../Utilities/fetchWithLanguage";
+import type { ErrorResponse } from "../Types/ErrorType";
 
 type RequestStatus = "idle" | "loading" | "success" | "error";
 
 type ConfirmErrorKey = "error_generic" | "missing_params";
 
-type ConfirmResponse = {
-  message?: unknown;
-  errors?: unknown;
-};
-
-function getConfirmErrorMessage(data: ConfirmResponse): string | null {
-  if (!data) return null;
-  if (typeof data.message === "string" && data.message.trim().length > 0) {
-    return data.message.trim();
+function getConfirmErrorMessages(data: ErrorResponse | null): string[] {
+  if (!data) return [];
+  const messages: string[] = [];
+  if (data.detail && data.detail.trim().length > 0) {
+    messages.push(data.detail.trim());
   }
-  if (Array.isArray(data.errors)) {
-    const first = data.errors.find((item) => typeof item === "string" && item.trim().length > 0);
-    if (typeof first === "string") return first.trim();
+  if (data.errors) {
+    Object.values(data.errors).forEach((errMsgs) => {
+      if (Array.isArray(errMsgs)) {
+        messages.push(...errMsgs.filter((msg) => typeof msg === "string" && msg.trim().length > 0));
+      }
+    });
   }
-  return null;
+  return messages;
 }
 
 export default function ConfirmEmail() {
@@ -35,7 +35,7 @@ export default function ConfirmEmail() {
   const token = params.get("token");
 
   const [status, setStatus] = useState<RequestStatus>("idle");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessages, setErrorMessages] = useState<string[] | null>(null);
   const [errorKey, setErrorKey] = useState<ConfirmErrorKey | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -48,7 +48,7 @@ export default function ConfirmEmail() {
 
     const confirm = async () => {
       setStatus("loading");
-      setErrorMessage(null);
+      setErrorMessages(null);
       setErrorKey(null);
       console.log("Starting email confirmation with userId:", userId);
       try {
@@ -59,17 +59,20 @@ export default function ConfirmEmail() {
         });
 
         if (!response.ok) {
-          let fallbackMessage: string | null = null;
+          const messages: string[] = [];
           try {
-            const data: ConfirmResponse = await response.json();
-            fallbackMessage = getConfirmErrorMessage(data);
+            const data: ErrorResponse = await response.json();
+            const parsedMessages = getConfirmErrorMessages(data);
+            if (parsedMessages.length) {
+              messages.push(...parsedMessages);
+            }
           } catch {
             // Ignore JSON parsing issues and use generic fallback below.
           }
           if (isCancelled) return;
           setStatus("error");
-          if (fallbackMessage) {
-            setErrorMessage(fallbackMessage);
+          if (messages.length) {
+            setErrorMessages(messages);
           } else {
             setErrorKey("error_generic");
           }
@@ -93,10 +96,9 @@ export default function ConfirmEmail() {
   }, [token, userId, attempt, missingParams]);
 
   const effectiveStatus = missingParams ? "error" : status;
-  const effectiveErrorMessage = missingParams ? null : errorMessage;
+  const effectiveErrorMessages = missingParams ? null : errorMessages;
   const effectiveErrorKey = missingParams ? "missing_params" : errorKey;
-  const displayedError =
-    effectiveErrorMessage ?? (effectiveErrorKey ? t(`confirm.${effectiveErrorKey}`) : null);
+  const displayedErrorKey = effectiveErrorMessages ? null : effectiveErrorKey;
 
   return (
     <main className="grid min-h-[100svh] w-screen place-items-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6">
@@ -139,11 +141,19 @@ export default function ConfirmEmail() {
 
         {effectiveStatus === "error" && (
           <div className="space-y-5">
-            {displayedError && (
-              <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md px-3 py-2 text-center">
-                {displayedError}
+            {effectiveErrorMessages ? (
+              <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md px-3 py-2">
+                <ul className="list-disc list-inside space-y-1">
+                  {effectiveErrorMessages.map((msg, idx) => (
+                    <li key={idx}>{msg}</li>
+                  ))}
+                </ul>
               </div>
-            )}
+            ) : displayedErrorKey ? (
+              <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md px-3 py-2 text-center">
+                {t(`confirm.${displayedErrorKey}`)}
+              </div>
+            ) : null}
             {!missingParams && (
               <button
                 type="button"

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import NavigationBar from '../components/NavigationBar'
 import { useI18n } from '../i18n/I18nProvider'
 import { apiBase, isAuthenticated, getTempToken, clearTempToken } from '../services/auth'
+import type { ErrorResponse } from '../Types/ErrorType'
 
 type RequestStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -67,8 +68,23 @@ export default function MFASetup() {
         })
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}))
-          throw new Error(data.error || data.message || t('mfa.error_generic'))
+          const errorList: string[] = []
+          try {
+            const errorData = await response.json() as ErrorResponse
+            if (errorData?.detail) {
+              errorList.push(errorData.detail)
+            }
+            if (errorData?.errors) {
+              Object.values(errorData.errors).forEach((messages) => {
+                if (Array.isArray(messages)) {
+                  errorList.push(...messages)
+                }
+              })
+            }
+          } catch {
+            // ignore JSON parse errors
+          }
+          throw new Error(errorList.length ? errorList.join('; ') : t('mfa.error_generic'))
         }
 
         const data: MFASetupResponse = await response.json()
@@ -127,8 +143,23 @@ export default function MFASetup() {
       })
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || data.message || t('mfa.error_generic'))
+        const errorList: string[] = []
+        try {
+          const errorData = await response.json() as ErrorResponse
+          if (errorData?.detail) {
+            errorList.push(errorData.detail)
+          }
+          if (errorData?.errors) {
+            Object.values(errorData.errors).forEach((messages) => {
+              if (Array.isArray(messages)) {
+                errorList.push(...messages)
+              }
+            })
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(errorList.length ? errorList.join('; ') : t('mfa.error_generic'))
       }
 
       const data = await response.json()

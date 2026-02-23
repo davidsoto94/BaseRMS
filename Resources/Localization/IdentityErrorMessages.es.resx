@@ -192,4 +192,7 @@
   <data name="SuccessfulForgotPassword" xml:space="preserve">
     <value>Si existe una cuenta con ese correo electrónico, un link para el cambio de contraseña ha sido enviado.</value>
   </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Token no valido</value>
+  </data>
 </root>

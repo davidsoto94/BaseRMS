@@ -75,8 +75,6 @@ export async function logout(): Promise<void> {
     await fetchWithAuth(`${apiBase}/api/v1/logout`, {
       method: 'POST'
     })
-  } catch (error) {
-    console.error('Logout API call failed:', error)
   } finally {
     sessionStorage.removeItem(TOKEN_KEY)
     sessionStorage.removeItem(TEMP_TOKEN_KEY)
