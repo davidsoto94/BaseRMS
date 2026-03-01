@@ -1,10 +1,10 @@
-﻿using BaseCRM.Entities;
-using BaseCRM.Enums;
+﻿using BaseRMS.Entities;
+using BaseRMS.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace BaseCRM.DbContexts;
+namespace BaseRMS.DbContexts;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
 {
@@ -26,7 +26,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Configure the default schema for all entities in this context
-        modelBuilder.HasDefaultSchema("crm");
+        modelBuilder.HasDefaultSchema("rms");
 
         ConfigurePropertyConversions(modelBuilder);
 
@@ -39,6 +39,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<ApplicationRole>().ToTable("asp_net_roles");
         modelBuilder.Entity<IdentityUserRole<string>>().ToTable("asp_net_user_roles");
         modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("asp_net_role_claims");
+
     }
 
     /// <summary>

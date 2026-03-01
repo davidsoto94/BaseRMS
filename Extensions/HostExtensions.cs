@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace BaseCRM.Extensions;
+namespace BaseRMS.Extensions;
 
 public static class HostExtensions
 {

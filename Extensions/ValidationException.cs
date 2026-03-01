@@ -1,4 +1,4 @@
-﻿namespace BaseCRM.Extensions;
+﻿namespace BaseRMS.Extensions;
 
 public sealed class ValidationException : Exception
 {

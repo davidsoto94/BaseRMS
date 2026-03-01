@@ -1,11 +1,10 @@
-﻿
-using BaseCRM.Entities;
-using BaseCRM.Services;
+﻿using BaseRMS.Entities;
+using BaseRMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaseCRM.Controllers;
+namespace BaseRMS.Controllers;
 
 [Route("api/v1/[controller]")]
 [ApiController]

@@ -124,6 +124,7 @@ export async function refreshAccessToken(): Promise<boolean> {
 
       const data: RefreshTokenResponse = await res.json()
       if (!data.accessToken) {
+        await logout() // Clear any existing tokens if refresh fails to get a new token
         return false
       }
 
@@ -131,7 +132,7 @@ export async function refreshAccessToken(): Promise<boolean> {
 
       return true
     } catch  {
-      sessionStorage.removeItem(TOKEN_KEY)
+      await logout() // Clear any existing tokens if refresh fails due to an error
       return false
     } finally {
       refreshPromise = null

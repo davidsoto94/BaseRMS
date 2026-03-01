@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace BaseCRM.Entities;
+namespace BaseRMS.Entities;
 
 public class ApplicationUser : IdentityUser
 {

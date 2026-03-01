@@ -1,8 +1,8 @@
-using BaseCRM.Localization;
+using BaseRMS.Localization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Localization;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 /// <summary>
 /// Service for localizing identity errors

@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BaseCRM.Migrations
+namespace BaseRMS.Migrations
 {
     /// <inheritdoc />
     public partial class AddedRefreshTokens : Migration
@@ -14,7 +14,7 @@ namespace BaseCRM.Migrations
         {
             migrationBuilder.CreateTable(
                 name: "refresh_tokens",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -34,14 +34,14 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_refresh_tokens_application_user_application_user_id",
                         column: x => x.application_user_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_users",
                         principalColumn: "id");
                 });
 
             migrationBuilder.CreateIndex(
                 name: "ix_refresh_tokens_application_user_id",
-                schema: "crm",
+                schema: "rms",
                 table: "refresh_tokens",
                 column: "application_user_id");
         }
@@ -51,7 +51,7 @@ namespace BaseCRM.Migrations
         {
             migrationBuilder.DropTable(
                 name: "refresh_tokens",
-                schema: "crm");
+                schema: "rms");
         }
     }
 }

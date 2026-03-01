@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BaseCRM.Extensions;
+namespace BaseRMS.Extensions;
 
 public sealed class GlobalExceptionHandler : IExceptionHandler
 {

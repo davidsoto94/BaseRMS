@@ -1,8 +1,8 @@
-﻿using BaseCRM.DbContexts;
-using BaseCRM.Entities;
+﻿using BaseRMS.DbContexts;
+using BaseRMS.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BaseCRM.Repositories;
+namespace BaseRMS.Repositories;
 
 public class AuthRepository(ApplicationDbContext applicationDbContext)
 {

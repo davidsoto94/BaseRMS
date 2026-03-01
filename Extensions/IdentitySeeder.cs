@@ -1,8 +1,8 @@
-﻿using BaseCRM.Entities;
-using BaseCRM.Enums;
+﻿using BaseRMS.Entities;
+using BaseRMS.Enums;
 using Microsoft.AspNetCore.Identity;
 
-namespace BaseCRM.Extensions;
+namespace BaseRMS.Extensions;
 
 public static class IdentitySeeder
 {

@@ -1,9 +1,10 @@
-using BaseCRM.Configurations;
-using BaseCRM.DbContexts;
-using BaseCRM.Entities;
-using BaseCRM.Extensions;
-using BaseCRM.Repositories;
-using BaseCRM.Services;
+using BaseRMS.Configurations;
+using BaseRMS.DbContexts;
+using BaseRMS.Entities;
+using BaseRMS.Extensions;
+using BaseRMS.Middleware;
+using BaseRMS.Repositories;
+using BaseRMS.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -137,7 +138,7 @@ app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<BaseCRM.Middleware.EnforceMfaMiddleware>();
+app.UseMiddleware<EnforceMfaMiddleware>();
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 

@@ -1,10 +1,10 @@
-﻿using BaseCRM.DTOs;
-using BaseCRM.Localization;
-using BaseCRM.Services;
+﻿using BaseRMS.DTOs;
+using BaseRMS.Localization;
+using BaseRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 
-namespace BaseCRM.Controllers;
+namespace BaseRMS.Controllers;
 
 [Route("api/v1/[controller]")]
 [ApiController]

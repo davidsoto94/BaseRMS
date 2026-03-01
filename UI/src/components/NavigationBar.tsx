@@ -36,7 +36,7 @@ export default function NavigationBar() {
         <div className="h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <NavLink to="/" className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-              BaseCRM
+               BaseRMS
             </NavLink>
           </div>
           <div className="flex items-center gap-3">

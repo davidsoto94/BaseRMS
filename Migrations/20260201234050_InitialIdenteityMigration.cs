@@ -1,10 +1,9 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BaseCRM.Migrations
+namespace BaseRMS.Migrations
 {
     /// <inheritdoc />
     public partial class InitialIdenteityMigration : Migration
@@ -13,11 +12,11 @@ namespace BaseCRM.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "crm");
+                name: "rms");
 
             migrationBuilder.CreateTable(
                 name: "asp_net_roles",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     id = table.Column<string>(type: "text", nullable: false),
@@ -33,7 +32,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_users",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     id = table.Column<string>(type: "text", nullable: false),
@@ -61,7 +60,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_role_claims",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -76,7 +75,7 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_role_claims_asp_net_roles_role_id",
                         column: x => x.role_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_roles",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -84,7 +83,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_claims",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -99,7 +98,7 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_claims_asp_net_users_user_id",
                         column: x => x.user_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -107,7 +106,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_logins",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     login_provider = table.Column<string>(type: "text", nullable: false),
@@ -121,7 +120,7 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_logins_asp_net_users_user_id",
                         column: x => x.user_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -129,7 +128,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_roles",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     user_id = table.Column<string>(type: "text", nullable: false),
@@ -141,14 +140,14 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_roles_asp_net_roles_role_id",
                         column: x => x.role_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_roles",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "fk_asp_net_user_roles_asp_net_users_user_id",
                         column: x => x.user_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -156,7 +155,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_tokens",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     user_id = table.Column<string>(type: "text", nullable: false),
@@ -170,7 +169,7 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_tokens_asp_net_users_user_id",
                         column: x => x.user_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -178,44 +177,44 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_role_claims_role_id",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_role_claims",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_roles",
                 column: "normalized_name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_user_claims_user_id",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_user_claims",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_user_logins_user_id",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_user_logins",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_user_roles_role_id",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_user_roles",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_users",
                 column: "normalized_email");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
-                schema: "crm",
+                schema: "rms",
                 table: "asp_net_users",
                 column: "normalized_user_name",
                 unique: true);
@@ -226,31 +225,31 @@ namespace BaseCRM.Migrations
         {
             migrationBuilder.DropTable(
                 name: "asp_net_role_claims",
-                schema: "crm");
+                schema: "rms");
 
             migrationBuilder.DropTable(
                 name: "asp_net_user_claims",
-                schema: "crm");
+                schema: "rms");
 
             migrationBuilder.DropTable(
                 name: "asp_net_user_logins",
-                schema: "crm");
+                schema: "rms");
 
             migrationBuilder.DropTable(
                 name: "asp_net_user_roles",
-                schema: "crm");
+                schema: "rms");
 
             migrationBuilder.DropTable(
                 name: "asp_net_user_tokens",
-                schema: "crm");
+                schema: "rms");
 
             migrationBuilder.DropTable(
                 name: "asp_net_roles",
-                schema: "crm");
+                schema: "rms");
 
             migrationBuilder.DropTable(
                 name: "asp_net_users",
-                schema: "crm");
+                schema: "rms");
         }
     }
 }

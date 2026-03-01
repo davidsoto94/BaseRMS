@@ -1,4 +1,4 @@
-﻿namespace BaseCRM.Entities;
+﻿namespace BaseRMS.Entities;
 
 public class RefreshToken
 {

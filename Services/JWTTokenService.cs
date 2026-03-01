@@ -1,7 +1,7 @@
-﻿using BaseCRM.Configurations;
-using BaseCRM.Entities;
-using BaseCRM.Enums;
-using BaseCRM.Repositories;
+﻿using BaseRMS.Configurations;
+using BaseRMS.Entities;
+using BaseRMS.Enums;
+using BaseRMS.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 public class JWTTokenService (
     UserManager<ApplicationUser> userManager,

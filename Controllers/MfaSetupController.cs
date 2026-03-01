@@ -1,12 +1,12 @@
-using BaseCRM.DTOs;
-using BaseCRM.Entities;
-using BaseCRM.Services;
+using BaseRMS.DTOs;
+using BaseRMS.Entities;
+using BaseRMS.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace BaseCRM.Controllers;
+namespace BaseRMS.Controllers;
 
 [Route("api/v1/mfa")]
 [ApiController]

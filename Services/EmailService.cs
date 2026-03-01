@@ -1,9 +1,9 @@
-﻿using BaseCRM.Configurations;
+﻿using BaseRMS.Configurations;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Net;
 using System.Net.Mail;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 public class EmailService : IEmailSender
 {

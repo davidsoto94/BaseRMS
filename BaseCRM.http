@@ -1,6 +1,0 @@
-@BaseCRM_HostAddress = http://localhost:5284
-
-GET {{BaseCRM_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

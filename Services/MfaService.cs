@@ -1,11 +1,11 @@
-using BaseCRM.DTOs;
-using BaseCRM.Entities;
+using BaseRMS.DTOs;
+using BaseRMS.Entities;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 public class MfaService(UserManager<ApplicationUser> userManager,
     IdentityErrorLocalizerService identityErrorLocalizer)
@@ -147,6 +147,6 @@ public class MfaService(UserManager<ApplicationUser> userManager,
     {
         // Return a placeholder QR code URI for now; actual QR code generation can be done client-side
         // This simplifies dependencies while still providing the necessary information
-        return $"otpauth://totp/BaseCRM:{email}?secret={key}&issuer=BaseCRM";
+        return $"otpauth://totp/BaseRMS:{email}?secret={key}&issuer=BaseRMS";
     }
 }

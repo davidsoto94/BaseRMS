@@ -1,4 +1,4 @@
-﻿namespace BaseCRM.Enums;
+﻿namespace BaseRMS.Enums;
 
 public enum PermissionEnum
 {

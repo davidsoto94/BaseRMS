@@ -1,9 +1,9 @@
-﻿using BaseCRM.Configurations;
-using BaseCRM.DTOs;
-using BaseCRM.Entities;
-using BaseCRM.Enums;
-using BaseCRM.Extensions;
-using BaseCRM.Localization;
+﻿using BaseRMS.Configurations;
+using BaseRMS.DTOs;
+using BaseRMS.Entities;
+using BaseRMS.Enums;
+using BaseRMS.Extensions;
+using BaseRMS.Localization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Localization;
 using System.Security.Claims;
 using System.Web;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 public class AccountService (
     UserManager<ApplicationUser> userManager,

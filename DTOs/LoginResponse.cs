@@ -1,4 +1,4 @@
-namespace BaseCRM.DTOs;
+namespace BaseRMS.DTOs;
 
 public class LoginResponse
 {

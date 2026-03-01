@@ -1,8 +1,8 @@
-using BaseCRM.Entities;
+using BaseRMS.Entities;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
-namespace BaseCRM.Middleware;
+namespace BaseRMS.Middleware;
 
 /// <summary>
 /// Middleware to enforce MFA requirement on protected endpoints.

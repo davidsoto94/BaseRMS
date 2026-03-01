@@ -1,7 +1,7 @@
-using BaseCRM.Localization;
+using BaseRMS.Localization;
 using Microsoft.Extensions.Localization;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 /// <summary>
 /// Service for loading and rendering localized email templates

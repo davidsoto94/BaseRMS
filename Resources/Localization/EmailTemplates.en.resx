@@ -72,7 +72,7 @@
     <value>Hello {0},</value>
   </data>
   <data name="EmailConfirmEmailWelcome" xml:space="preserve">
-    <value>Welcome to BaseCRM! To complete your registration and activate your account, please confirm your email address by clicking the button below.</value>
+    <value>Welcome to BaseRMS! To complete your registration and activate your account, please confirm your email address by clicking the button below.</value>
   </data>
   <data name="EmailConfirmButton" xml:space="preserve">
     <value>Confirm Email</value>
@@ -95,7 +95,7 @@
   </data>
   <!-- Email Footer -->
   <data name="EmailFooterCopyright" xml:space="preserve">
-    <value>© {0} BaseCRM. All rights reserved.</value>
+    <value>© {0} BaseRMS. All rights reserved.</value>
   </data>
   <data name="EmailFooterDisclaimer" xml:space="preserve">
     <value>This is an automated email, please do not reply.</value>

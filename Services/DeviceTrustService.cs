@@ -1,10 +1,10 @@
-using BaseCRM.Entities;
-using BaseCRM.Repositories;
+using BaseRMS.Entities;
+using BaseRMS.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BaseCRM.Services;
+namespace BaseRMS.Services;
 
 public class DeviceTrustService
 {

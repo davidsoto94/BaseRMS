@@ -1,4 +1,4 @@
-namespace BaseCRM.Localization;
+namespace BaseRMS.Localization;
 
 /// <summary>
 /// Marker class for identity error localization resources.

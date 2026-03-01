@@ -1,10 +1,9 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BaseCRM.Migrations
+namespace BaseRMS.Migrations
 {
     /// <inheritdoc />
     public partial class AddedMfaAuth : Migration
@@ -14,7 +13,7 @@ namespace BaseCRM.Migrations
         {
             migrationBuilder.CreateTable(
                 name: "trusted_device",
-                schema: "crm",
+                schema: "rms",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -31,7 +30,7 @@ namespace BaseCRM.Migrations
                     table.ForeignKey(
                         name: "fk_trusted_device_application_user_user_id",
                         column: x => x.user_id,
-                        principalSchema: "crm",
+                        principalSchema: "rms",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -39,7 +38,7 @@ namespace BaseCRM.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_trusted_device_user_id",
-                schema: "crm",
+                schema: "rms",
                 table: "trusted_device",
                 column: "user_id");
         }
@@ -49,7 +48,7 @@ namespace BaseCRM.Migrations
         {
             migrationBuilder.DropTable(
                 name: "trusted_device",
-                schema: "crm");
+                schema: "rms");
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using BaseCRM.Enums;
+﻿using BaseRMS.Enums;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BaseCRM.Entities;
+namespace BaseRMS.Entities;
 
 public class ApplicationRole : IdentityRole
 {
