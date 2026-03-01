@@ -70,6 +70,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSingleton<IEmailSender, EmailService>();
 builder.Services.AddScoped<RoleRepository>();
 builder.Services.AddScoped<AuthRepository>();
+builder.Services.AddScoped<EventLoggerRepository>();
 builder.Services.AddScoped<JWTTokenService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<IdentityErrorLocalizerService>();

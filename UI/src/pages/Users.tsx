@@ -8,7 +8,7 @@ import type { ErrorResponse } from '../Types/ErrorType'
 
 type User = {
   id: string
-  firstName: string
+  name: string
   lastName: string
   email: string
   emailConfirmed: boolean
@@ -194,7 +194,7 @@ export default function Users() {
                     >
                       <td className="px-6 py-3">
                         <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {user.firstName} {user.lastName}
+                          {user.name} {user.lastName}
                         </span>
                       </td>
                       <td className="px-6 py-3">{user.email}</td>

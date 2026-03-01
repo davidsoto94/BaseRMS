@@ -164,8 +164,8 @@ export default function MFASetup() {
 
       const data = await response.json()
       
-      // If this is login flow and we get an accessToken, store it
-      if (isLoginFlow && data.accessToken) {
+      // If response is ok and we get an accessToken, update bearer token
+      if (data.accessToken) {
         sessionStorage.setItem('accessToken', data.accessToken)
         clearTempToken()
       }

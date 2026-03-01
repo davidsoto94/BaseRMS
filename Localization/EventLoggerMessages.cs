@@ -4,6 +4,6 @@ namespace BaseRMS.Localization;
 /// Marker class for identity error localization resources.
 /// Resource files: Resources/IdentityErrorMessages.en.resx, Resources/IdentityErrorMessages.es.resx, etc.
 /// </summary>
-public class EventLoggerMessages
+public class IdentityErrorMessages
 {
 }

@@ -3,6 +3,7 @@ using BaseRMS.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace BaseRMS.DbContexts;
 
@@ -21,6 +22,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public required DbSet<ApplicationUser> ApplicationUsers { get; set; }
     public required DbSet<RefreshToken> RefreshTokens { get; set; }
     public required DbSet<TrustedDevice> TrustedDevices { get; set; }
+    public required DbSet<EventLogger> EventLogs { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -57,6 +59,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
                           .Select(e => Enum.Parse<PermissionEnum>(e))
                           .ToList());
+        });
+
+        modelBuilder.Entity<EventLogger>(entity =>
+        {
+            entity.Property(e => e.EventTypes)
+                .HasConversion(
+                v => string.Join(',', v),
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => Enum.Parse<EventTypeEnum>(x))
+                    .ToHashSet(),
+                new ValueComparer<ICollection<EventTypeEnum>>(
+                    (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => c.ToList()));
         });
 
     }
