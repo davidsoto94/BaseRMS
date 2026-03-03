@@ -8,7 +8,7 @@ public class EventLogger
     public int Id { get; set; }
     public string? TriggerUserEmail { get; set; }
     public ICollection<string>? AffectedUsersEmails { get; set; }
-    public ICollection<EventTypeEnum>? EventTypes { get; set; }
+    public ICollection<EventTypeEnum> EventTypes { get; set; } = [];
     /// <summary>
     /// The code to be used by the localization to show to the user in a UI. This code should be used to get the localized string from the localization resources.
     /// </summary>

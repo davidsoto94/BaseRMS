@@ -1,17 +1,23 @@
 using BaseRMS.DTOs;
 using BaseRMS.Entities;
+using BaseRMS.Enums;
+using BaseRMS.Extensions;
+using BaseRMS.Localization;
 using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
+using Microsoft.Extensions.Localization;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BaseRMS.Services;
 
 public class MfaService(UserManager<ApplicationUser> userManager,
-    IdentityErrorLocalizerService identityErrorLocalizer)
+    IdentityErrorLocalizerService identityErrorLocalizer,
+    IStringLocalizer<IdentityErrorMessages> identityLocalizer,
+    AccountService accountService)
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IdentityErrorLocalizerService _identityErrorLocalizer = identityErrorLocalizer;
+    private readonly IStringLocalizer<IdentityErrorMessages> _identityLocalizer = identityLocalizer;
+    private readonly AccountService _accountService = accountService;
 
     public async Task<bool> IsMfaEnable(ApplicationUser user)
     {
@@ -78,13 +84,27 @@ public class MfaService(UserManager<ApplicationUser> userManager,
         return (true, recoveryCodes.ToList());
     }
 
-    public async Task DisableMfaAsync(ApplicationUser user)
-    {
+    public async Task DisableMfaAsync(ApplicationUser userRequest, string emailToDisable)
+    {        
+        if (!await _accountService.IsAuthorizedForPermission(userRequest, PermissionEnum.DisableMFA))
+        {
+            throw new UnauthorizedAccessException(_identityLocalizer["UnauthorizedAccess"]);
+        }
+        var user = await _userManager.FindByEmailAsync(emailToDisable);              
+        if (user is null)
+        {
+            throw new KeyNotFoundException();
+        }
         var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
         if (!result.Succeeded)
         {
-            var localizedErrors = _identityErrorLocalizer.LocalizeErrors(result.Errors ?? []);
-            throw new ArgumentException(string.Join(", ", localizedErrors ?? []));
+            var localizedErrors = result.Errors.Select(s => new ValidationError
+            {
+                Field = s.Code,
+                Message = _identityErrorLocalizer.LocalizeError(s)
+            });
+
+            throw new ValidationException(localizedErrors);
         }
     }
 

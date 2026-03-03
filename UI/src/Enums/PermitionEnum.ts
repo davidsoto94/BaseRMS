@@ -7,4 +7,5 @@ export const Permissions = {
     EditRole: 'EditRole',
     DeleteRole: 'DeleteRole',
     ViewRole: 'ViewRole',
+    DisableMFA: 'DisableMFA',
 };

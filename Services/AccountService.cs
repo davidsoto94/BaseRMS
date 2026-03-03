@@ -76,7 +76,6 @@ public class AccountService(
         var deviceFingerprint = _deviceTrustService.GenerateDeviceFingerprint();
         var isDeviceTrusted = await _deviceTrustService.IsDeviceTrusted(user, deviceFingerprint);
 
-        // RequireSetupMfa: true = user must SET UP MFA (doesn't have it yet)
         // MfaRequired: true = user has MFA enabled AND device is not trusted
         var mfaRequired = isTwoFactorEnabled && !isDeviceTrusted;
 
@@ -164,7 +163,7 @@ public class AccountService(
     public async Task RegisterNewUser(RegisterDTO newUserData, ClaimsPrincipal claims)
     {
         var user = await  GetApplicationUser(claims);
-        var isAuthorizedToAdd = await IsAuthorizedToAddNewUser(user);
+        var isAuthorizedToAdd = await IsAuthorizedForPermission(user, PermissionEnum.AddUser);
         if (!isAuthorizedToAdd)
         {
             throw new UnauthorizedAccessException(_identityLocalizer["UnauthorizedAccess"].Value);
@@ -289,7 +288,7 @@ public class AccountService(
         }
     }
 
-    public async Task<bool> IsAuthorizedToAddNewUser(ApplicationUser? requestUser)
+    public async Task<bool> IsAuthorizedForPermission(ApplicationUser? requestUser, PermissionEnum permissionRequested)
     {
         if (requestUser is null)
         {
@@ -297,21 +296,7 @@ public class AccountService(
         }
 
         var permitions = await UserPermitions(requestUser);
-        if (permitions.Contains(PermissionEnum.AddUser))
-        {
-            return true;
-        }
-        return false;
-    }
-    public async Task<bool> IsAuthorizedToViewUsers(ApplicationUser? requestUser)
-    {
-        if (requestUser is null)
-        {
-            return false;
-        }
-
-        var permitions = await UserPermitions(requestUser);
-        if (permitions.Contains(PermissionEnum.ViewUser))
+        if (permitions.Contains(permissionRequested))
         {
             return true;
         }

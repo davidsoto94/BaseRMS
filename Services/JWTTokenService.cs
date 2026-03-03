@@ -21,7 +21,8 @@ public class JWTTokenService (
     public async Task<string> GenerateJwtToken(ApplicationUser user, string? scope = null)
     {
         var roles = await userManager.GetRolesAsync(user);
-        var allPermissions = (await roleRepository.GetApplicationRoles()
+
+        var allPermissionsPerUser = (await roleRepository.GetApplicationRoles()
             .Where(w => w.Name != null && roles.Contains(w.Name))
             .Select(s => s.Permitions)
             .ToListAsync())
@@ -41,7 +42,7 @@ public class JWTTokenService (
         // Add permissions only if not a scoped token (like MFA verification)
         if (string.IsNullOrEmpty(scope))
         {
-            claims.Add(new Claim("permissions", JsonSerializer.Serialize(allPermissions)));
+            claims.Add(new Claim("permissions", JsonSerializer.Serialize(allPermissionsPerUser)));
         }
         else
         {

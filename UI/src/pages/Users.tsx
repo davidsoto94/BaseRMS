@@ -26,12 +26,15 @@ export default function Users() {
 	  const [error, setError] = useState<string[] | null>(null)
 	const [resendingId, setResendingId] = useState<string | null>(null)
 	const [resendStatus, setResendStatus] = useState<{ [key: string]: string }>({})
+	const [disablingMfaId, setDisablingMfaId] = useState<string | null>(null)
+	const [disableMfaStatus, setDisableMfaStatus] = useState<{ [key: string]: string }>({})
 	const hasFetched = useRef(false)
   const payload = token ? decodeJwt(token) : null;
 
   const canViewUsers = payload?.permissions?.includes(Permissions.ViewUser) ?? false;
   const canAddUser = payload?.permissions?.includes(Permissions.AddUser) ?? false;
   const canEditUser = payload?.permissions?.includes(Permissions.EditUser) ?? false;
+  const canDisableMfa = payload?.permissions?.includes(Permissions.DisableMFA) ?? false;
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -129,6 +132,53 @@ export default function Users() {
     navigate(`/users/${userId}/edit`)
   }
 
+  const handleDisableMfa = async (userId: string, userEmail: string) => {
+    try {
+      setDisablingMfaId(userId)
+      setDisableMfaStatus((prev) => ({
+        ...prev,
+        [userId]: 'sending',
+      }))
+
+      const response = await fetchWithAuth(`${apiBase}/api/v1/mfa?emailToDisable=${encodeURIComponent(userEmail)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        throw new Error(t('users.disable_mfa_error'))
+      }
+
+      setDisableMfaStatus((prev) => ({
+        ...prev,
+        [userId]: 'success',
+      }))
+
+      setTimeout(() => {
+        setDisableMfaStatus((prev) => {
+          const newStatus = { ...prev }
+          delete newStatus[userId]
+          return newStatus
+        })
+      }, 3000)
+    } catch {
+      setDisableMfaStatus((prev) => ({
+        ...prev,
+        [userId]: 'error',
+      }))
+
+      setTimeout(() => {
+        setDisableMfaStatus((prev) => {
+          const newStatus = { ...prev }
+          delete newStatus[userId]
+          return newStatus
+        })
+      }, 3000)
+    } finally {
+      setDisablingMfaId(null)
+    }
+  }
+
   if (!canViewUsers) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -179,7 +229,7 @@ export default function Users() {
                     <th className="px-6 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">
                       {t('users.email')}
                     </th>
-                    {(canAddUser || canEditUser) && (
+                    {(canAddUser || canEditUser || canDisableMfa) && (
                       <th className="px-6 py-3 text-left font-semibold text-gray-900 dark:text-gray-100">
                         {t('users.actions')}
                       </th>
@@ -198,7 +248,7 @@ export default function Users() {
                         </span>
                       </td>
                       <td className="px-6 py-3">{user.email}</td>
-                      {(canAddUser || canEditUser) && (
+                      {(canAddUser || canEditUser || canDisableMfa) && (
                         <td className="px-6 py-3">
                           <div className="flex gap-2">
                             {canAddUser && !user.emailConfirmed && (
@@ -233,6 +283,32 @@ export default function Users() {
                                 className="inline-flex items-center rounded-md bg-gray-900 text-white px-3 py-1 text-xs font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900"
                               >
                                 {t('users.edit')}
+                              </button>
+                            )}
+                            {canDisableMfa && (
+                              <button
+                                onClick={() => handleDisableMfa(user.id, user.email)}
+                                disabled={disablingMfaId === user.id}
+                                className="inline-flex items-center rounded-md bg-red-600 text-white px-3 py-1 text-xs font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                              >
+                                {disablingMfaId === user.id ? (
+                                  <>
+                                    <span className="inline-block h-3 w-3 rounded-full border-2 border-white border-t-transparent mr-1 animate-spin" />
+                                    {t('users.disable_mfa')}
+                                  </>
+                                ) : disableMfaStatus[user.id] === 'success' ? (
+                                  <>
+                                    <span className="mr-1">✓</span>
+                                    {t('users.disable_mfa_success')}
+                                  </>
+                                ) : disableMfaStatus[user.id] === 'error' ? (
+                                  <>
+                                    <span className="mr-1">✕</span>
+                                    {t('users.disable_mfa_error')}
+                                  </>
+                                ) : (
+                                  t('users.disable_mfa')
+                                )}
                               </button>
                             )}
                           </div>

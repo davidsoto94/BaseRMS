@@ -100,6 +100,9 @@
     "resend_email": "Renvoyer l'email",
     "resend_success": "Email renvoyé avec succès",
     "resend_error": "Erreur lors de l'envoi de l'email",
+    "disable_mfa": "Désactiver MFA",
+    "disable_mfa_success": "MFA désactivé avec succès",
+    "disable_mfa_error": "Erreur lors de la désactivation de MFA",
     "no_permission": "Vous n'avez pas la permission de voir les utilisateurs"
   },
   "mfa": {

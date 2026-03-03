@@ -1,5 +1,6 @@
 ﻿using BaseRMS.Entities;
 using BaseRMS.Enums;
+using BaseRMS.Repositories;
 using Microsoft.AspNetCore.Identity;
 
 namespace BaseRMS.Extensions;
@@ -11,19 +12,24 @@ public static class IdentitySeeder
         using (var scope = serviceProvider.CreateScope())
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+            var roleRepository = scope.ServiceProvider.GetRequiredService<RoleRepository>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
             var allEnums = Enum.GetValues(typeof(PermissionEnum)).Cast<PermissionEnum>().ToList();
 
             // Define roles to seed
-            var role = new ApplicationRole() { Name = "Admin", Permitions = allEnums };
-
-            // Seed roles
-            if (!await roleManager.RoleExistsAsync(role.Name))
+            var role = roleManager.Roles.FirstOrDefault(r => r.Name == "Admin");
+            if (role  == null)
             {
+                role = new ApplicationRole() { Name = "Admin", Permitions = allEnums };
                 await roleManager.CreateAsync(role);
             }
 
+            if (role.Permitions != allEnums) {
+                //This ensures that all permissions added are now in the admin role
+                role.Permitions = allEnums;
+                await roleRepository.UpdateRolePermissions(role);
+            }
             // Define the admin user details
             var adminEmail = "admin@gmail.com";
             var adminPassword = "Admin@123";

@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace BaseRMS.Controllers;
 
-[Route("api/v1/mfa")]
+[Route("api/v1/[controller]")]
 [ApiController]
 [Authorize]
 public class MfaController (UserManager<ApplicationUser> userManager, 
@@ -44,11 +44,11 @@ public class MfaController (UserManager<ApplicationUser> userManager,
     }
 
     [HttpDelete]
-    public async Task<IActionResult> Delete()
+    public async Task<IActionResult> Delete(string emailToDisable)
     {
-        var user = await _accountService.GetApplicationUser(User);
-        await _mfaService.DisableMfaAsync(user);
-        return NoContent();
+        var userRequest = await _accountService.GetApplicationUser(User);
+        await _mfaService.DisableMfaAsync(userRequest, emailToDisable);
+        return Ok();
     }
 
     [HttpPost("verify")]

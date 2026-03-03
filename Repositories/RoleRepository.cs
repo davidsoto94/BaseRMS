@@ -12,4 +12,11 @@ public class RoleRepository(ApplicationDbContext applicationDbContext)
     {
         return _applicationDbContext.ApplicationRoles.AsNoTracking().AsQueryable();
     }
+
+    public async Task UpdateRolePermissions(ApplicationRole role)
+    {
+        _applicationDbContext.Entry(role).State = EntityState.Modified;
+        await _applicationDbContext.SaveChangesAsync();
+        _applicationDbContext.Entry(role).State = EntityState.Detached;
+    }
 }

@@ -9,5 +9,6 @@ public enum PermissionEnum
     AddRole = 5,
     EditRole = 6,
     DeleteRole = 7,
-    ViewRole = 8
+    ViewRole = 8,
+    DisableMFA = 9
 }

@@ -94,6 +94,9 @@
     "resend_email": "Resend Email",
     "resend_success": "Email resent successfully",
     "resend_error": "Failed to resend email",
+    "disable_mfa": "Disable MFA",
+    "disable_mfa_success": "MFA disabled successfully",
+    "disable_mfa_error": "Failed to disable MFA",
     "no_permission": "You do not have permission to view users"
   },
   "mfa": {

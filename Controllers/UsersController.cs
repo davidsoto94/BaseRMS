@@ -1,4 +1,5 @@
 ﻿using BaseRMS.Entities;
+using BaseRMS.Enums;
 using BaseRMS.Localization;
 using BaseRMS.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +28,7 @@ public class UsersController (AccountService accountService,
     public async Task<IActionResult> Get()
     {
         var user = await _userManager.GetUserAsync(User);
-        var isAuthorizedToViewUsers = await accountService.IsAuthorizedToViewUsers(user);
+        var isAuthorizedToViewUsers = await accountService.IsAuthorizedForPermission(user, PermissionEnum.ViewUser);
         if (!isAuthorizedToViewUsers)
         {
             return Unauthorized(_localizer["UnauthorizedAccess"].Value);
