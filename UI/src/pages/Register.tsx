@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import NavigationBar from "../components/NavigationBar";
+import Sidebar from "../components/Sidebar";
 import { fetchWithAuth, apiBase } from "../services/auth";
 import { useI18n } from "../i18n/I18nProvider";
 import type { ErrorResponse } from "../Types/ErrorType";
@@ -121,10 +121,10 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <NavigationBar />
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        <section className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
+      <Sidebar />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
+        <section className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-8 mx-auto max-w-4xl">
           <header className="mb-8">
             <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
               {t("register.title")}

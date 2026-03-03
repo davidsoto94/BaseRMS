@@ -23,6 +23,10 @@
     "subtitle": "Has iniciado sesión.",
     "logout": "Cerrar sesión"
   },
+  "sidebar": {
+    "collapse": "Contraer barra lateral",
+    "expand": "Expandir barra lateral"
+  },
   "register": {
     "title": "Crear usuario",
     "subtitle": "Completa el formulario para agregar un nuevo usuario.",

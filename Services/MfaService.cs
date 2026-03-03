@@ -64,7 +64,7 @@ public class MfaService(UserManager<ApplicationUser> userManager,
         var isValid = await _userManager.VerifyTwoFactorTokenAsync(
             user, _userManager.Options.Tokens.AuthenticatorTokenProvider, authenticatorCode);
 
-        if (!isValid)
+            if (!isValid)
         {
             throw new ArgumentException("Invalid authenticator code");
         }

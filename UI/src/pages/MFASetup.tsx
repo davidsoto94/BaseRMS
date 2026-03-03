@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import NavigationBar from '../components/NavigationBar'
+import Sidebar from '../components/Sidebar'
 import { useI18n } from '../i18n/I18nProvider'
 import { apiBase, isAuthenticated, getTempToken, clearTempToken } from '../services/auth'
 import type { ErrorResponse } from '../Types/ErrorType'
@@ -33,11 +33,77 @@ export default function MFASetup() {
   const [verificationCode, setVerificationCode] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const hasFetched = useRef(false)
 
   // Check if this is from login flow (has tempToken in state)
   const isLoginFlow = !!location.state?.tempToken
   const tempToken = location.state?.tempToken || getTempToken()
   const isLoggedIn = isAuthenticated()
+
+  // Memoized fetch function to prevent unnecessary re-runs
+  const fetchMFASetup = useCallback(async () => {
+    try {
+      setStatus('loading')
+      setErrorMessage(null)
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept-Language': localStorage.getItem('lang') || 'en',
+      }
+
+      // Add temp token if in login flow
+      if (tempToken) {
+        headers['Authorization'] = `Bearer ${tempToken}`
+      }
+
+      const response = await fetch(`${apiBase}/api/v1/mfa/setup`, {
+        method: 'POST',
+        headers,
+      })
+
+      if (!response.ok) {
+        const errorList: string[] = []
+        try {
+          const errorData = await response.json() as ErrorResponse
+          if (errorData?.detail) {
+            errorList.push(errorData.detail)
+          }
+          if (errorData?.errors) {
+            Object.values(errorData.errors).forEach((messages) => {
+              if (Array.isArray(messages)) {
+                errorList.push(...messages)
+              }
+            })
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(errorList.length ? errorList.join('; ') : t('mfa.error_generic'))
+      }
+
+      const data: MFASetupResponse = await response.json()
+      if (data.qrCode && data.manualKey) {
+        // data.qrCode is the otpauth:// URI
+        setManualKey(data.manualKey)
+        
+        // Generate QR code image from the URI
+        try {
+          const qrDataUrl = await generateQRCodeImage(data.qrCode)
+          setQrCodeDataUrl(qrDataUrl)
+        } catch (err) {
+          console.error('Failed to generate QR code:', err)
+          // Still continue even if QR generation fails
+        }
+        
+        setStatus('idle')
+      } else {
+        throw new Error(t('mfa.error_generic'))
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : t('mfa.error_generic'))
+      setStatus('error')
+    }
+  }, [t, tempToken])
 
   // Fetch MFA setup on component mount
   useEffect(() => {
@@ -46,73 +112,15 @@ export default function MFASetup() {
       navigate('/login', { replace: true })
       return
     }
-
-    const fetchMFASetup = async () => {
-      try {
-        setStatus('loading')
-        setErrorMessage(null)
-
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          'Accept-Language': localStorage.getItem('lang') || 'en',
-        }
-
-        // Add temp token if in login flow
-        if (tempToken) {
-          headers['Authorization'] = `Bearer ${tempToken}`
-        }
-
-        const response = await fetch(`${apiBase}/api/v1/mfa/setup`, {
-          method: 'POST',
-          headers,
-        })
-
-        if (!response.ok) {
-          const errorList: string[] = []
-          try {
-            const errorData = await response.json() as ErrorResponse
-            if (errorData?.detail) {
-              errorList.push(errorData.detail)
-            }
-            if (errorData?.errors) {
-              Object.values(errorData.errors).forEach((messages) => {
-                if (Array.isArray(messages)) {
-                  errorList.push(...messages)
-                }
-              })
-            }
-          } catch {
-            // ignore JSON parse errors
-          }
-          throw new Error(errorList.length ? errorList.join('; ') : t('mfa.error_generic'))
-        }
-
-        const data: MFASetupResponse = await response.json()
-        if (data.qrCode && data.manualKey) {
-          // data.qrCode is the otpauth:// URI
-          setManualKey(data.manualKey)
-          
-          // Generate QR code image from the URI
-          try {
-            const qrDataUrl = await generateQRCodeImage(data.qrCode)
-            setQrCodeDataUrl(qrDataUrl)
-          } catch (err) {
-            console.error('Failed to generate QR code:', err)
-            // Still continue even if QR generation fails
-          }
-          
-          setStatus('idle')
-        } else {
-          throw new Error(t('mfa.error_generic'))
-        }
-      } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : t('mfa.error_generic'))
-        setStatus('error')
-      }
+// Only fetch once
+    if (hasFetched.current) {
+      return
     }
+    hasFetched.current = true
 
+    
     fetchMFASetup()
-  }, [t, isLoginFlow, tempToken, isLoggedIn, navigate])
+  }, [isLoginFlow, isLoggedIn, navigate, fetchMFASetup])
 
   const handleVerifyMFA = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -183,10 +191,10 @@ export default function MFASetup() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {isLoggedIn && <NavigationBar />}
-      <main className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12">
-        <section className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
+      {isLoggedIn && <Sidebar />}
+      <main className={`${isLoggedIn ? 'flex-1' : 'w-full'} px-4 sm:px-6 lg:px-8 py-12`}>
+        <section className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-8 mx-auto max-w-2xl">
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
             {t('mfa.title')}
           </h1>

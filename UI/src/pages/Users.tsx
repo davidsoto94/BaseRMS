@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import NavigationBar from '../components/NavigationBar'
+import Sidebar from '../components/Sidebar'
 import { useI18n } from '../i18n/I18nProvider'
 import { Permissions } from '../Enums/PermitionEnum'
 import auth, { fetchWithAuth, apiBase, decodeJwt } from '../services/auth'
@@ -181,9 +181,9 @@ export default function Users() {
 
   if (!canViewUsers) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <NavigationBar />
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
+        <Sidebar />
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
           <section className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <p className="text-center text-gray-600 dark:text-gray-300">
               {t('users.no_permission')}
@@ -195,9 +195,9 @@ export default function Users() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <NavigationBar />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
+      <Sidebar />
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
         <section className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-8">
           <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
             {t('users.title')}

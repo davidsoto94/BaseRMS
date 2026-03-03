@@ -23,6 +23,10 @@
     "subtitle": "Vous êtes connecté.",
     "logout": "Se déconnecter"
   },
+  "sidebar": {
+    "collapse": "Réduire la barre latérale",
+    "expand": "Agrandir la barre latérale"
+  },
   "register": {
     "title": "Créer un utilisateur",
     "subtitle": "Complétez le formulaire pour ajouter un nouvel utilisateur.",

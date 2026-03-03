@@ -23,6 +23,10 @@
     "subtitle": "You are signed in.",
     "logout": "Sign out"
   },
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
   "register": {
     "title": "Create user",
     "subtitle": "Fill out the form to add a new user.",
